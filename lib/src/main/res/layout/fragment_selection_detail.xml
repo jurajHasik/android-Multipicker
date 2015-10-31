@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:weightSum="1">
+
+    <include layout="@layout/action_bar_selection" />
+
+    <FrameLayout
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.9"
+        android:layout_gravity="center_horizontal"
+        android:background="@color/default_background">
+
+        <GridView xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:id="@+id/entitySelectionGrid"
+            android:numColumns="@integer/folder_detail_columns"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:choiceMode="multipleChoice"
+            android:stretchMode="columnWidth"
+            tools:context=".CurrentSelectionFragment" />
+
+    </FrameLayout>
+
+</LinearLayout>

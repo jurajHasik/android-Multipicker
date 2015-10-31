@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="main_activity" type="layout">@layout/main_activity_twopane</item>
+    <item name="action_bar_selection" type="layout">@layout/action_bar_selection_twopane</item>
+    <item name="action_bar_folder_detail" type="layout">@layout/action_bar_folder_detail_twopane</item>
+    <bool name="twoPane">true</bool>
+</resources>
