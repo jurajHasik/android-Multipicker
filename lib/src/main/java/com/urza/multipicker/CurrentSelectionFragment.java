@@ -1,7 +1,6 @@
 package com.urza.multipicker;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -9,7 +8,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.GridView;
 
 import com.nostra13.universalimageloader.core.ImageLoader;
@@ -60,7 +58,7 @@ public class CurrentSelectionFragment extends Fragment {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate");
 
-        ((FolderListActivityFragmented) getActivity()).setCurrentFolderId(FolderListActivityFragmented.IN_SELECTION);
+        ((FolderListActivityFragmented) getActivity()).setDetailId(FolderListActivityFragmented.IN_SELECTION);
         MEDIA_TYPE = getArguments().getInt(MultiPicker.MEDIATYPE_CHOICE);
         selection = (HashMap) getArguments().getSerializable(MultiPicker.SELECTION);
         if (selection != null) Log.d(TAG, "Successfully loaded selection from args");

@@ -47,7 +47,7 @@ public class FolderListFragment extends ListFragment implements
      */
     private static Callbacks sDummyCallbacks = new Callbacks() {
         @Override
-        public void onItemSelected(String id, int position) {
+        public void onItemSelected(String id, int position, String name) {
         }
     };
     private Callbacks mCallbacks = sDummyCallbacks;
@@ -175,7 +175,8 @@ public class FolderListFragment extends ListFragment implements
 
         // Notify the active callbacks interface (the activity, if the
         // fragment is attached to one) that an item has been selected.
-        mCallbacks.onItemSelected(Long.toString(id), position);
+        mCallbacks.onItemSelected(Long.toString(id), position,
+                ((MediaFolder) mAdapter.getItem(position)).getDirName());
         mActivatedPosition = position;
         mActivatedId = id;
         Log.d(TAG, "Folder with Id " + Long.toString(id) + " selected");
@@ -250,7 +251,7 @@ public class FolderListFragment extends ListFragment implements
         /**
          * Callback for when an item has been selected.
          */
-        void onItemSelected(String id, int position);
+        void onItemSelected(String id, int position, String name);
     }
 
 }

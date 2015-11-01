@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
@@ -13,6 +12,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
+import android.widget.ListView;
+import android.widget.TextView;
 
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.listener.PauseOnScrollListener;
@@ -30,10 +31,12 @@ public class FolderDetailFragment extends Fragment implements LoaderManager.Load
 
     static final String TAG = FolderDetailFragment.class.getSimpleName();
     
-    public static final String ARG_ITEM_ID = "item_id";
+    public static final String ARG_FOLDER_ID = "ARG_FOLDER_ID";
+    public static final String ARG_FOLDER_NAME = "ARG_FOLDER_NAME";
     OnEntitySelectedListener mCallback;
     private int MEDIA_TYPE;
     private String parentIndex;
+    private String parentName;
     private GridView mGridView;
     private MediaEntityBaseAdapter mAdapter;
     private HashMap<String, List<MediaEntityWrapper>> selection;
@@ -65,11 +68,12 @@ public class FolderDetailFragment extends Fragment implements LoaderManager.Load
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate");
 
-        if (getArguments().containsKey(ARG_ITEM_ID)) {
+        if (getArguments().containsKey(ARG_FOLDER_ID)) {
             // Load the dummy content specified by the fragment
             // arguments. In a real-world scenario, use a Loader
             // to load content from a content provider.
-            parentIndex = getArguments().getString(ARG_ITEM_ID);
+            parentIndex = getArguments().getString(ARG_FOLDER_ID);
+            parentName = getArguments().getString(ARG_FOLDER_NAME);
         }
         MEDIA_TYPE = getArguments().getInt(MultiPicker.MEDIATYPE_CHOICE);
         selection = (HashMap) getArguments().getSerializable(MultiPicker.SELECTION);
@@ -108,6 +112,12 @@ public class FolderDetailFragment extends Fragment implements LoaderManager.Load
         return rootView;
     }
 
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        ((TextView) view.findViewById(R.id.screenTitle)).setText("Gallery > " + parentName);
+    }
 
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
@@ -177,6 +187,12 @@ public class FolderDetailFragment extends Fragment implements LoaderManager.Load
         super.onStop();
         Log.d(TAG, "onPause");
         Log.d(TAG, "selection: " + selection.toString());
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        Log.d(TAG, "onSaveInstanceState");
     }
 
     public void onDestroy() {

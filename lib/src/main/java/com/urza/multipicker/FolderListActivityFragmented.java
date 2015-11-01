@@ -18,6 +18,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import static com.urza.multipicker.FolderDetailFragment.ARG_FOLDER_NAME;
+
 /**
  * An activity representing a list of Folders. This activity
  * has different presentations for handset and tablet-size devices. On
@@ -41,8 +43,7 @@ public class FolderListActivityFragmented extends FragmentActivity
     final static String TAG_TWOPANE = "2";
 
     private static final String WAS_TWO_PANE = "WAS_TWO_PANE";
-    private static final String CURRENT_FOLDER = "CURRENT_FOLDER";
-    private static final String ACTIVATED_POSITION = "ACTIVATED_POSITION";
+    private static final String DETAIL_ID = "DETAIL_ID";
     private static final String ACTIVATED_ID = "ACTIVATED_ID";
 
     private HashMap<String, List<MediaEntityWrapper>> selection;
@@ -50,13 +51,14 @@ public class FolderListActivityFragmented extends FragmentActivity
     private int MEDIA_TYPE;
     private boolean twoPane;
     private long activatedFolderId = ListView.INVALID_POSITION;
+    private String activatedFolderName;
     /*
      * Tracking what folder is user navigating
      * IN_SELECTION for "Current selection"
      * PRISTINE for not selecting any folder yet
      * 0..N real folder id
      */
-    private int currentFolderId = PRISTINE;
+    private int detailId = PRISTINE;
     static final int PRISTINE = -1;
     static final int IN_SELECTION = -2;
     //When no FolderListFragment in twoPane mode does not exist
@@ -118,8 +120,9 @@ public class FolderListActivityFragmented extends FragmentActivity
              */
             selection = (HashMap) savedInstanceState.getSerializable(MultiPicker.SELECTION);
             MEDIA_TYPE = savedInstanceState.getInt(MultiPicker.MEDIATYPE_CHOICE);
-            currentFolderId = savedInstanceState.getInt(CURRENT_FOLDER, PRISTINE);
+            detailId = savedInstanceState.getInt(DETAIL_ID, PRISTINE);
             activatedFolderId = savedInstanceState.getLong(ACTIVATED_ID, ListView.INVALID_POSITION);
+            activatedFolderName = savedInstanceState.getString(ARG_FOLDER_NAME);
         }
         Log.d(TAG, "selection: " + selection.toString());
     }
@@ -131,7 +134,7 @@ public class FolderListActivityFragmented extends FragmentActivity
         Log.d(TAG, "onRestoreInstanceState - twoPane: " + getResources().getBoolean(R.bool.twoPane));
         twoPane = getResources().getBoolean(R.bool.twoPane);
         Log.d(TAG, "Previous state - twoPane: " + savedInstanceState.getBoolean(WAS_TWO_PANE)
-                + " currentFolderId: " + currentFolderId);
+                + " detailId: " + detailId);
         /* DEBUG
          * Check what is recorded in FragmentManager backStack
          */
@@ -163,7 +166,7 @@ public class FolderListActivityFragmented extends FragmentActivity
              * c) User is navigating through current selection - SelectionDetailFragment
              */
             if (!savedInstanceState.getBoolean(WAS_TWO_PANE)) {
-                switch (currentFolderId) {
+                switch (detailId) {
                     case PRISTINE: {
                         //We always have FolderListFragment in twoPane mode
                         break;
@@ -172,14 +175,14 @@ public class FolderListActivityFragmented extends FragmentActivity
                         CurrentSelectionFragment f =
                                 (CurrentSelectionFragment) fm.findFragmentByTag(CurrentSelectionFragment.TAG+TAG_TWOPANE);
                         if(f == null) {
-                            Bundle selectionInfo = new Bundle();
-                            selectionInfo.putInt(MultiPicker.MEDIATYPE_CHOICE, MEDIA_TYPE);
-                            selectionInfo.putSerializable(MultiPicker.SELECTION, selection);
+                            Bundle args = new Bundle();
+                            args.putInt(MultiPicker.MEDIATYPE_CHOICE, MEDIA_TYPE);
+                            args.putSerializable(MultiPicker.SELECTION, selection);
                             f = new CurrentSelectionFragment();
-                            f.setArguments(selectionInfo);
+                            f.setArguments(args);
                         }
                         FragmentTransaction transaction = fm.beginTransaction();
-                        transaction.replace(R.id.folder_detail_container_fragmented, f, CurrentSelectionFragment.TAG + TAG_TWOPANE);
+                        transaction.replace(R.id.folder_detail_container_fragmented, f, CurrentSelectionFragment.TAG+TAG_TWOPANE);
                         transaction.commit();
                         toggleSelectedButtons(true);
                         break;
@@ -188,15 +191,16 @@ public class FolderListActivityFragmented extends FragmentActivity
                         FolderDetailFragment f =
                                 (FolderDetailFragment) fm.findFragmentByTag(FolderDetailFragment.TAG+TAG_TWOPANE);
                         if(f == null) {
-                            Bundle selectionInfo = new Bundle();
-                            selectionInfo.putInt(MultiPicker.MEDIATYPE_CHOICE, MEDIA_TYPE);
-                            selectionInfo.putString(FolderDetailFragment.ARG_ITEM_ID, String.valueOf(currentFolderId));
-                            selectionInfo.putSerializable(MultiPicker.SELECTION, selection);
+                            Bundle args = new Bundle();
+                            args.putInt(MultiPicker.MEDIATYPE_CHOICE, MEDIA_TYPE);
+                            args.putString(FolderDetailFragment.ARG_FOLDER_ID, String.valueOf(detailId));
+                            args.putString(ARG_FOLDER_NAME, activatedFolderName);
+                            args.putSerializable(MultiPicker.SELECTION, selection);
                             f = new FolderDetailFragment();
-                            f.setArguments(selectionInfo);
+                            f.setArguments(args);
                         }
                         FragmentTransaction transaction = fm.beginTransaction();
-                        transaction.replace(R.id.folder_detail_container_fragmented, f, FolderDetailFragment.TAG + TAG_TWOPANE);
+                        transaction.replace(R.id.folder_detail_container_fragmented, f, FolderDetailFragment.TAG+TAG_TWOPANE);
                         transaction.commit();
                     }
                 }
@@ -214,7 +218,7 @@ public class FolderListActivityFragmented extends FragmentActivity
                  * b) User is navigating through selected folder - FolderDetailFragment
                  * c) User is navigating through current selection - SelectionDetailFragment
                  */
-                switch (currentFolderId) {
+                switch (detailId) {
                     case PRISTINE: {
                         FolderListFragment f = (FolderListFragment) fm.findFragmentByTag(FolderListFragment.TAG);
                         if(f == null) {
@@ -229,11 +233,11 @@ public class FolderListActivityFragmented extends FragmentActivity
                         CurrentSelectionFragment f =
                                 (CurrentSelectionFragment) fm.findFragmentByTag(CurrentSelectionFragment.TAG);
                         if(f == null) {
-                            Bundle selectionInfo = new Bundle();
-                            selectionInfo.putInt(MultiPicker.MEDIATYPE_CHOICE, MEDIA_TYPE);
-                            selectionInfo.putSerializable(MultiPicker.SELECTION, selection);
+                            Bundle args = new Bundle();
+                            args.putInt(MultiPicker.MEDIATYPE_CHOICE, MEDIA_TYPE);
+                            args.putSerializable(MultiPicker.SELECTION, selection);
                             f = new CurrentSelectionFragment();
-                            f.setArguments(selectionInfo);
+                            f.setArguments(args);
                         }
                         FragmentTransaction transaction = fm.beginTransaction();
                         transaction.replace(R.id.fragment_container, f, CurrentSelectionFragment.TAG);
@@ -244,12 +248,13 @@ public class FolderListActivityFragmented extends FragmentActivity
                     default: {
                         FolderDetailFragment f = (FolderDetailFragment) fm.findFragmentByTag(FolderDetailFragment.TAG);
                         if(f == null) {
-                            Bundle selectionInfo = new Bundle();
-                            selectionInfo.putInt(MultiPicker.MEDIATYPE_CHOICE, MEDIA_TYPE);
-                            selectionInfo.putString(FolderDetailFragment.ARG_ITEM_ID, String.valueOf(currentFolderId));
-                            selectionInfo.putSerializable(MultiPicker.SELECTION, selection);
+                            Bundle args = new Bundle();
+                            args.putInt(MultiPicker.MEDIATYPE_CHOICE, MEDIA_TYPE);
+                            args.putString(FolderDetailFragment.ARG_FOLDER_ID, String.valueOf(detailId));
+                            args.putString(ARG_FOLDER_NAME, activatedFolderName);
+                            args.putSerializable(MultiPicker.SELECTION, selection);
                             f = new FolderDetailFragment();
-                            f.setArguments(selectionInfo);
+                            f.setArguments(args);
                         }
                         FragmentTransaction transaction = fm.beginTransaction();
                         transaction.replace(R.id.fragment_container, f, FolderDetailFragment.TAG);
@@ -264,7 +269,7 @@ public class FolderListActivityFragmented extends FragmentActivity
         super.onSaveInstanceState(outstate);
         Log.d(TAG, "onSaveInstanceState");
         Log.d(TAG, "selection: " + selection.toString());
-        Log.d(TAG, "saving - twoPane: " + getResources().getBoolean(R.bool.twoPane) + " currentFolderId: " + currentFolderId);
+        Log.d(TAG, "saving - twoPane: " + getResources().getBoolean(R.bool.twoPane) + " detailId: " + detailId);
         outstate.putSerializable(MultiPicker.SELECTION, selection);
         outstate.putInt(MultiPicker.MEDIATYPE_CHOICE, MEDIA_TYPE);
         /*
@@ -272,8 +277,9 @@ public class FolderListActivityFragmented extends FragmentActivity
          * landscape <-> portrait, the res/values-*-land/* are not in place
          */
         outstate.putBoolean(WAS_TWO_PANE, twoPane);
-        outstate.putInt(CURRENT_FOLDER, currentFolderId);
+        outstate.putInt(DETAIL_ID, detailId);
         outstate.putLong(ACTIVATED_ID, activatedFolderId);
+        outstate.putString(ARG_FOLDER_NAME, activatedFolderName);
     }
 
     public void onPause() {
@@ -309,7 +315,7 @@ public class FolderListActivityFragmented extends FragmentActivity
                 Log.d(TAG, "BackStackEntry[" + i + "] id: " + fm.getBackStackEntryAt(i).getId()
                         + " name: " + fm.getBackStackEntryAt(i).getName());
             }
-            if (currentFolderId == IN_SELECTION) toggleSelectedButtons(false);
+            if (detailId == IN_SELECTION) toggleSelectedButtons(false);
             super.onBackPressed();
             Log.d(TAG, "BackStackEntry count: " + fm.getBackStackEntryCount());
             for(int i=0; i<fm.getBackStackEntryCount();i++) {
@@ -324,22 +330,24 @@ public class FolderListActivityFragmented extends FragmentActivity
      * indicating that the item with the given ID was selected.
      */
     @Override
-    public void onItemSelected(String id, int position) {
-        currentFolderId = Integer.valueOf(id);
+    public void onItemSelected(String id, int position, String name) {
+        detailId = Integer.valueOf(id);
         activatedFolderId = Long.parseLong(id);
+        activatedFolderName = name;
         if (getResources().getBoolean(R.bool.twoPane)) {
             Log.d(TAG, "onItemSelected for TwoPane layout");
             // In two-pane mode, show the detail view in this activity by
             // adding or replacing the detail fragment using a
             // fragment transaction.
-            Bundle arguments = new Bundle();
-            arguments.putInt(MultiPicker.MEDIATYPE_CHOICE, MEDIA_TYPE);
-            arguments.putString(FolderDetailFragment.ARG_ITEM_ID, id);
+            Bundle args = new Bundle();
+            args.putInt(MultiPicker.MEDIATYPE_CHOICE, MEDIA_TYPE);
+            args.putString(FolderDetailFragment.ARG_FOLDER_ID, id);
+            args.putString(FolderDetailFragment.ARG_FOLDER_NAME, name);
             if (!selection.containsKey(id) || selection.get(id) == null)
                 selection.put(id, new ArrayList<MediaEntityWrapper>());
-            arguments.putSerializable(MultiPicker.SELECTION, selection);
+            args.putSerializable(MultiPicker.SELECTION, selection);
             FolderDetailFragment f = new FolderDetailFragment();
-            f.setArguments(arguments);
+            f.setArguments(args);
             FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
             transaction.replace(R.id.folder_detail_container_fragmented, f, FolderDetailFragment.TAG + TAG_TWOPANE);
             //transaction.addToBackStack("folderDetail");
@@ -349,23 +357,24 @@ public class FolderListActivityFragmented extends FragmentActivity
         } else {
             // In single-pane mode, simply start the detail fragment
             // for the selected item ID.
-            Bundle selectionInfo = new Bundle();
-            selectionInfo.putInt(MultiPicker.MEDIATYPE_CHOICE, MEDIA_TYPE);
-            selectionInfo.putString(FolderDetailFragment.ARG_ITEM_ID, id);
+            Bundle args = new Bundle();
+            args.putInt(MultiPicker.MEDIATYPE_CHOICE, MEDIA_TYPE);
+            args.putString(FolderDetailFragment.ARG_FOLDER_ID, id);
+            args.putString(FolderDetailFragment.ARG_FOLDER_NAME, name);
             if (!selection.containsKey(id) || selection.get(id) == null) {
                 Log.d(TAG, "Created selection list for folder id: " + id);
                 selection.put(id, new ArrayList<MediaEntityWrapper>());
             }
-            selectionInfo.putSerializable(MultiPicker.SELECTION, selection);
+            args.putSerializable(MultiPicker.SELECTION, selection);
             // / Create fragment and give it an argument specifying the folder it should show
             FolderDetailFragment f = new FolderDetailFragment();
-            f.setArguments(selectionInfo);
+            f.setArguments(args);
 
             FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
             // Replace whatever is in the fragment_container view with this fragment,
             // and add the transaction to the back stack so the user can navigate back
             transaction.replace(R.id.fragment_container, f, FolderDetailFragment.TAG);
-            transaction.addToBackStack(PRISTINE + "->" + currentFolderId);
+            transaction.addToBackStack(PRISTINE + "->" + detailId);
 
             // Commit the transaction
             transaction.commit();
@@ -391,15 +400,15 @@ public class FolderListActivityFragmented extends FragmentActivity
                 FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
                 transaction.replace(R.id.folder_detail_container_fragmented, f,
                         CurrentSelectionFragment.TAG+TAG_TWOPANE);
-                transaction.addToBackStack(currentFolderId+"->"+IN_SELECTION);
+                transaction.addToBackStack(detailId +"->"+IN_SELECTION);
                 transaction.commit();
             } else {
                 FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
                 transaction.replace(R.id.fragment_container, f, CurrentSelectionFragment.TAG);
-                transaction.addToBackStack(currentFolderId+"->"+IN_SELECTION);
+                transaction.addToBackStack(detailId +"->"+IN_SELECTION);
                 transaction.commit();
             }
-            currentFolderId = IN_SELECTION;
+            detailId = IN_SELECTION;
         } else {
             // Return back to gallery
             view.setActivated(false);
@@ -481,8 +490,8 @@ public class FolderListActivityFragmented extends FragmentActivity
         return MEDIA_TYPE;
     }
 
-    public void setCurrentFolderId(int currentFolderId) {
-        this.currentFolderId = currentFolderId;
+    public void setDetailId(int detailId) {
+        this.detailId = detailId;
     }
 
     public HashMap<String, List<MediaEntityWrapper>> getSelection() {
