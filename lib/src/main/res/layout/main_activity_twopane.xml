@@ -1,8 +1,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                xmlns:tools="http://schemas.android.com/tools"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:baselineAligned="false" >
+                android:baselineAligned="false">
 
     <!--tools:context=".FolderListActivityFragmented"-->
 
@@ -32,15 +31,24 @@
             android:id="@+id/folder_list_container"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="0.25"
+            android:layout_weight="0.3"
             android:layout_gravity="top" />
 
         <FrameLayout
             android:id="@+id/folder_detail_container_fragmented"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="0.75"
-            android:layout_gravity="top" />
+            android:layout_weight="0.7"
+            android:layout_gravity="top">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:text="No folder selected ..."
+                android:id="@+id/textView"
+                android:layout_gravity="center"/>
+        </FrameLayout>
 
     </LinearLayout>
 

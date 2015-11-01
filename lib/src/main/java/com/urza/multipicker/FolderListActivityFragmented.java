@@ -131,33 +131,18 @@ public class FolderListActivityFragmented extends FragmentActivity
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
 
-        Log.d(TAG, "onRestoreInstanceState - twoPane: " + getResources().getBoolean(R.bool.twoPane));
         twoPane = getResources().getBoolean(R.bool.twoPane);
-        Log.d(TAG, "Previous state - twoPane: " + savedInstanceState.getBoolean(WAS_TWO_PANE)
+        boolean wasTwoPane = savedInstanceState.getBoolean(WAS_TWO_PANE);
+        Log.d(TAG, "onRestoreInstanceState - twoPane: " + twoPane);
+        Log.d(TAG, "Previous state - twoPane: " + wasTwoPane
                 + " detailId: " + detailId);
-        /* DEBUG
-         * Check what is recorded in FragmentManager backStack
-         */
         FragmentManager fm = getSupportFragmentManager();
-        Log.d(TAG, "BackStackEntry count: " + fm.getBackStackEntryCount());
-        for(int i=0; i<fm.getBackStackEntryCount();i++) {
-            Log.d(TAG, "BackStackEntry["+i+"] id: "+fm.getBackStackEntryAt(i).getId()
-                    +" name: "+fm.getBackStackEntryAt(i).getName());
-        }
 
-        if (getResources().getBoolean(R.bool.twoPane)) {
-            FolderListFragment folderListFragment =
-                    (FolderListFragment) fm.findFragmentByTag(FolderListFragment.TAG+TAG_TWOPANE);
-            if(folderListFragment == null) {
-                Log.d(TAG, "Not found by TAG - Crating new FolderListFragment");
-                /*
-                 * Get selected folder position from old fragment if possible
-                 */
-                folderListFragment = new FolderListFragment();
-                folderListFragment.setmActivatedId(activatedFolderId);
-            }
+        if (twoPane && !wasTwoPane) {
+            FolderListFragment fL = new FolderListFragment();
+            fL.setmActivatedId(activatedFolderId);
             fm.beginTransaction().replace(R.id.folder_list_container,
-                    folderListFragment, FolderListFragment.TAG+TAG_TWOPANE).commit();
+                    fL, FolderListFragment.TAG + TAG_TWOPANE).commit();
             /*
              * If portrait -> landscape configuration change happened
              * we have 3 options
@@ -165,105 +150,149 @@ public class FolderListActivityFragmented extends FragmentActivity
              * b) User is navigating through selected folder - FolderDetailFragment
              * c) User is navigating through current selection - SelectionDetailFragment
              */
-            if (!savedInstanceState.getBoolean(WAS_TWO_PANE)) {
-                switch (detailId) {
-                    case PRISTINE: {
-                        //We always have FolderListFragment in twoPane mode
-                        break;
-                    }
-                    case IN_SELECTION: {
-                        CurrentSelectionFragment f =
-                                (CurrentSelectionFragment) fm.findFragmentByTag(CurrentSelectionFragment.TAG+TAG_TWOPANE);
-                        if(f == null) {
-                            Bundle args = new Bundle();
-                            args.putInt(MultiPicker.MEDIATYPE_CHOICE, MEDIA_TYPE);
-                            args.putSerializable(MultiPicker.SELECTION, selection);
-                            f = new CurrentSelectionFragment();
-                            f.setArguments(args);
-                        }
-                        FragmentTransaction transaction = fm.beginTransaction();
-                        transaction.replace(R.id.folder_detail_container_fragmented, f, CurrentSelectionFragment.TAG+TAG_TWOPANE);
-                        transaction.commit();
-                        toggleSelectedButtons(true);
-                        break;
-                    }
-                    default: {
-                        FolderDetailFragment f =
-                                (FolderDetailFragment) fm.findFragmentByTag(FolderDetailFragment.TAG+TAG_TWOPANE);
-                        if(f == null) {
-                            Bundle args = new Bundle();
-                            args.putInt(MultiPicker.MEDIATYPE_CHOICE, MEDIA_TYPE);
-                            args.putString(FolderDetailFragment.ARG_FOLDER_ID, String.valueOf(detailId));
-                            args.putString(ARG_FOLDER_NAME, activatedFolderName);
-                            args.putSerializable(MultiPicker.SELECTION, selection);
-                            f = new FolderDetailFragment();
-                            f.setArguments(args);
-                        }
-                        FragmentTransaction transaction = fm.beginTransaction();
-                        transaction.replace(R.id.folder_detail_container_fragmented, f, FolderDetailFragment.TAG+TAG_TWOPANE);
-                        transaction.commit();
-                    }
+            switch (detailId) {
+                case PRISTINE: {
+                    //We always have FolderListFragment in twoPane mode
+                    break;
+                }
+                case IN_SELECTION: {
+                    Bundle args = new Bundle();
+                    args.putInt(MultiPicker.MEDIATYPE_CHOICE, MEDIA_TYPE);
+                    args.putSerializable(MultiPicker.SELECTION, selection);
+                    CurrentSelectionFragment f = new CurrentSelectionFragment();
+                    f.setArguments(args);
+                    FragmentTransaction transaction = fm.beginTransaction();
+                    transaction.replace(R.id.folder_detail_container_fragmented, f, CurrentSelectionFragment.TAG + TAG_TWOPANE);
+                    transaction.commit();
+                    toggleSelectedButtons(true);
+                    break;
+                }
+                default: {
+                    Bundle args = new Bundle();
+                    args.putInt(MultiPicker.MEDIATYPE_CHOICE, MEDIA_TYPE);
+                    args.putString(FolderDetailFragment.ARG_FOLDER_ID, String.valueOf(detailId));
+                    args.putString(ARG_FOLDER_NAME, activatedFolderName);
+                    args.putSerializable(MultiPicker.SELECTION, selection);
+                    FolderDetailFragment f = new FolderDetailFragment();
+                    f.setArguments(args);
+                    FragmentTransaction transaction = fm.beginTransaction();
+                    transaction.replace(R.id.folder_detail_container_fragmented, f, FolderDetailFragment.TAG + TAG_TWOPANE);
+                    transaction.commit();
                 }
             }
-        } else {
-            if(savedInstanceState.getBoolean(WAS_TWO_PANE)) {
-                /*
-                 * We revert back to dummy interface, since FolderListFragment in single pane mode
-                 * does not highlight its list items
-                 */
-                selectionEvent = dummyEvent;
-                /*
-                 * There are three options when coming from landscape mode
-                 * a) User has not selected any folder yet - FolderListFragment
-                 * b) User is navigating through selected folder - FolderDetailFragment
-                 * c) User is navigating through current selection - SelectionDetailFragment
-                 */
-                switch (detailId) {
-                    case PRISTINE: {
-                        FolderListFragment f = (FolderListFragment) fm.findFragmentByTag(FolderListFragment.TAG);
-                        if(f == null) {
-                            f = new FolderListFragment();
-                            f.setArguments(getIntent().getExtras());
-                        }
-                        fm.beginTransaction()
-                                .replace(R.id.fragment_container, f, FolderListFragment.TAG).commit();
-                        break;
-                    }
-                    case IN_SELECTION: {
-                        CurrentSelectionFragment f =
-                                (CurrentSelectionFragment) fm.findFragmentByTag(CurrentSelectionFragment.TAG);
-                        if(f == null) {
-                            Bundle args = new Bundle();
-                            args.putInt(MultiPicker.MEDIATYPE_CHOICE, MEDIA_TYPE);
-                            args.putSerializable(MultiPicker.SELECTION, selection);
-                            f = new CurrentSelectionFragment();
-                            f.setArguments(args);
-                        }
+        }
+
+        if (!twoPane && wasTwoPane) {
+            /*
+             * We revert back to dummy interface, since FolderListFragment in single pane mode
+             * does not highlight its list items
+             */
+            selectionEvent = dummyEvent;
+            /*
+             * There are three options when coming from landscape mode
+             * a) User has not selected any folder yet - FolderListFragment
+             * b) User is navigating through selected folder - FolderDetailFragment
+             * c) User is navigating through current selection - SelectionDetailFragment
+             */
+            switch (detailId) {
+                case PRISTINE: {
+                    /*
+                     * First, remove Everything on BackStack
+                     */
+                    fm.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+
+                    FolderListFragment f = new FolderListFragment();
+                    f.setArguments(getIntent().getExtras());
+                    fm.beginTransaction()
+                            .add(R.id.fragment_container, f, FolderListFragment.TAG).commit();
+                    break;
+                }
+                case IN_SELECTION: {
+                    /*
+                     * Get previousId from which the Selection was accessed
+                     * a) previousID == PRISTINE
+                     * b) previousID >= 0, therefore current detailID == IN_SELECTION was accessed
+                     * from FolderDetail with id = previousId
+                     *
+                     * BackStackEntry has Name in form of detailId's: "from"->"to"
+                     */
+                    String[] ids = fm.getBackStackEntryAt(fm.getBackStackEntryCount() - 1).getName().split("->", 2);
+                    if (!ids[1].contentEquals(String.valueOf(IN_SELECTION)))
+                        throw new IllegalStateException("Invalid FragmentTransaction - " + ids[0] + "->" + ids[1]);
+                    int previousId = Integer.valueOf(ids[0]);
+                    fm.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+
+                    FolderListFragment f0 = new FolderListFragment();
+                    f0.setArguments(getIntent().getExtras());
+                    fm.beginTransaction()
+                            .add(R.id.fragment_container, f0, FolderListFragment.TAG).commit();
+
+                    if (previousId >= 0) {
+                        // b) Selection comes from FolderDetail for Folder id = previousId
+                        Bundle args = new Bundle();
+                        args.putInt(MultiPicker.MEDIATYPE_CHOICE, MEDIA_TYPE);
+                        args.putString(FolderDetailFragment.ARG_FOLDER_ID, String.valueOf(previousId));
+                        args.putString(ARG_FOLDER_NAME, activatedFolderName);
+                        args.putSerializable(MultiPicker.SELECTION, selection);
+                        FolderDetailFragment f1 = new FolderDetailFragment();
+                        f1.setArguments(args);
                         FragmentTransaction transaction = fm.beginTransaction();
-                        transaction.replace(R.id.fragment_container, f, CurrentSelectionFragment.TAG);
-                        transaction.commit();
-                        toggleSelectedButtons(true);
-                        break;
-                    }
-                    default: {
-                        FolderDetailFragment f = (FolderDetailFragment) fm.findFragmentByTag(FolderDetailFragment.TAG);
-                        if(f == null) {
-                            Bundle args = new Bundle();
-                            args.putInt(MultiPicker.MEDIATYPE_CHOICE, MEDIA_TYPE);
-                            args.putString(FolderDetailFragment.ARG_FOLDER_ID, String.valueOf(detailId));
-                            args.putString(ARG_FOLDER_NAME, activatedFolderName);
-                            args.putSerializable(MultiPicker.SELECTION, selection);
-                            f = new FolderDetailFragment();
-                            f.setArguments(args);
-                        }
-                        FragmentTransaction transaction = fm.beginTransaction();
-                        transaction.replace(R.id.fragment_container, f, FolderDetailFragment.TAG);
+                        transaction.replace(R.id.fragment_container, f1, FolderDetailFragment.TAG);
+                        transaction.addToBackStack(PRISTINE + "->" + previousId);
                         transaction.commit();
                     }
+
+                    Bundle args = new Bundle();
+                    args.putInt(MultiPicker.MEDIATYPE_CHOICE, MEDIA_TYPE);
+                    args.putSerializable(MultiPicker.SELECTION, selection);
+                    CurrentSelectionFragment f2 = new CurrentSelectionFragment();
+                    f2.setArguments(args);
+                    FragmentTransaction transaction = fm.beginTransaction();
+                    transaction.replace(R.id.fragment_container, f2, CurrentSelectionFragment.TAG);
+                    switch (previousId) {
+                        // a)
+                        case PRISTINE:
+                            transaction.addToBackStack(PRISTINE + "->" + IN_SELECTION);
+                            break;
+                        // b)
+                        default:
+                            transaction.addToBackStack(previousId + "->" + IN_SELECTION);
+                    }
+                    transaction.commit();
+                    toggleSelectedButtons(true);
+
+                    break;
+                }
+                default: {
+                    /*
+                     * First, remove Everything on BackStack
+                     */
+                    fm.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+
+                    FolderListFragment f0 = new FolderListFragment();
+                    f0.setArguments(getIntent().getExtras());
+                    fm.beginTransaction()
+                            .add(R.id.fragment_container, f0, FolderListFragment.TAG).commit();
+
+                    Bundle args = new Bundle();
+                    args.putInt(MultiPicker.MEDIATYPE_CHOICE, MEDIA_TYPE);
+                    args.putString(FolderDetailFragment.ARG_FOLDER_ID, String.valueOf(detailId));
+                    args.putString(ARG_FOLDER_NAME, activatedFolderName);
+                    args.putSerializable(MultiPicker.SELECTION, selection);
+                    FolderDetailFragment f1 = new FolderDetailFragment();
+                    f1.setArguments(args);
+                    FragmentTransaction transaction = fm.beginTransaction();
+                    transaction.replace(R.id.fragment_container, f1, FolderDetailFragment.TAG);
+                    /*
+                     * Create backStack with single transaction from FolderList to FolderDetail
+                     */
+                    transaction.addToBackStack(PRISTINE + "->" + detailId);
+                    transaction.commit();
                 }
             }
         }
     }
+
 
     public void onSaveInstanceState(Bundle outstate) {
         super.onSaveInstanceState(outstate);
@@ -308,20 +337,8 @@ public class FolderListActivityFragmented extends FragmentActivity
              */
             finish();
         } else {
-            String TAG = "toggleSelection";
-            FragmentManager fm = getSupportFragmentManager();
-            Log.d(TAG, "BackStackEntry count: " + fm.getBackStackEntryCount());
-            for(int i=0; i<fm.getBackStackEntryCount();i++) {
-                Log.d(TAG, "BackStackEntry[" + i + "] id: " + fm.getBackStackEntryAt(i).getId()
-                        + " name: " + fm.getBackStackEntryAt(i).getName());
-            }
             if (detailId == IN_SELECTION) toggleSelectedButtons(false);
             super.onBackPressed();
-            Log.d(TAG, "BackStackEntry count: " + fm.getBackStackEntryCount());
-            for(int i=0; i<fm.getBackStackEntryCount();i++) {
-                Log.d(TAG, "BackStackEntry[" + i + "] id: " + fm.getBackStackEntryAt(i).getId()
-                        + " name: " + fm.getBackStackEntryAt(i).getName());
-            }
         }
     }
 
@@ -415,33 +432,9 @@ public class FolderListActivityFragmented extends FragmentActivity
             toggleSelectedButtons(false);
             if (getResources().getBoolean(R.bool.twoPane)) {
                 selectionEvent.selectionToggled(false);
-                String TAG = "toggleSelection";
-                FragmentManager fm = getSupportFragmentManager();
-                Log.d(TAG, "BackStackEntry count: " + fm.getBackStackEntryCount());
-                for(int i=0; i<fm.getBackStackEntryCount();i++) {
-                    Log.d(TAG, "BackStackEntry["+i+"] id: "+fm.getBackStackEntryAt(i).getId()
-                            +" name: "+fm.getBackStackEntryAt(i).getName());
-                }
                 getSupportFragmentManager().popBackStack();
-                Log.d(TAG, "BackStackEntry count: " + fm.getBackStackEntryCount());
-                for(int i=0; i<fm.getBackStackEntryCount();i++) {
-                    Log.d(TAG, "BackStackEntry["+i+"] id: "+fm.getBackStackEntryAt(i).getId()
-                            +" name: "+fm.getBackStackEntryAt(i).getName());
-                }
             } else {
-                String TAG = "toggleSelection";
-                FragmentManager fm = getSupportFragmentManager();
-                Log.d(TAG, "BackStackEntry count: " + fm.getBackStackEntryCount());
-                for(int i=0; i<fm.getBackStackEntryCount();i++) {
-                    Log.d(TAG, "BackStackEntry["+i+"] id: "+fm.getBackStackEntryAt(i).getId()
-                            +" name: "+fm.getBackStackEntryAt(i).getName());
-                }
                 getSupportFragmentManager().popBackStack();
-                Log.d(TAG, "BackStackEntry count: " + fm.getBackStackEntryCount());
-                for(int i=0; i<fm.getBackStackEntryCount();i++) {
-                    Log.d(TAG, "BackStackEntry["+i+"] id: "+fm.getBackStackEntryAt(i).getId()
-                            +" name: "+fm.getBackStackEntryAt(i).getName());
-                }
             }
         }
     }
@@ -504,5 +497,17 @@ public class FolderListActivityFragmented extends FragmentActivity
 
     public void setSelectionEvent(ToggleSelectionEvent selectionEvent) {
         this.selectionEvent = selectionEvent;
+    }
+
+    void DEBUGBACKSTACK() {
+        /* DEBUG
+         * Check what is recorded in FragmentManager backStack
+         */
+        FragmentManager fm = getSupportFragmentManager();
+        Log.d(TAG, "BackStackEntry count: " + fm.getBackStackEntryCount());
+        for (int i = 0; i < fm.getBackStackEntryCount(); i++) {
+            Log.d(TAG, "BackStackEntry[" + i + "] id: " + fm.getBackStackEntryAt(i).getId()
+                    + " name: " + fm.getBackStackEntryAt(i).getName());
+        }
     }
 }

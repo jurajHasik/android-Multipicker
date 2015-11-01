@@ -12,7 +12,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
-import android.widget.ListView;
 import android.widget.TextView;
 
 import com.nostra13.universalimageloader.core.ImageLoader;
@@ -34,7 +33,7 @@ public class FolderDetailFragment extends Fragment implements LoaderManager.Load
     public static final String ARG_FOLDER_ID = "ARG_FOLDER_ID";
     public static final String ARG_FOLDER_NAME = "ARG_FOLDER_NAME";
     OnEntitySelectedListener mCallback;
-    private int MEDIA_TYPE;
+    private int mediaType;
     private String parentIndex;
     private String parentName;
     private GridView mGridView;
@@ -68,17 +67,14 @@ public class FolderDetailFragment extends Fragment implements LoaderManager.Load
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate");
 
-        if (getArguments().containsKey(ARG_FOLDER_ID)) {
-            // Load the dummy content specified by the fragment
-            // arguments. In a real-world scenario, use a Loader
-            // to load content from a content provider.
-            parentIndex = getArguments().getString(ARG_FOLDER_ID);
-            parentName = getArguments().getString(ARG_FOLDER_NAME);
-        }
-        MEDIA_TYPE = getArguments().getInt(MultiPicker.MEDIATYPE_CHOICE);
+        parentIndex = getArguments().getString(ARG_FOLDER_ID);
+        parentName = getArguments().getString(ARG_FOLDER_NAME);
+        mediaType = getArguments().getInt(MultiPicker.MEDIATYPE_CHOICE);
         selection = (HashMap) getArguments().getSerializable(MultiPicker.SELECTION);
-        if (selection != null) Log.d(TAG, "Successfully loaded selection from args");
-        else Log.d(TAG, "No selection was included in args");
+        if (selection != null)
+            Log.d(TAG, "Successfully loaded selection from args");
+        else
+            Log.d(TAG, "No selection was included in args");
         Log.d(TAG, "selection: " + selection.toString());
     }
 
@@ -108,7 +104,6 @@ public class FolderDetailFragment extends Fragment implements LoaderManager.Load
                     }
                 }
         );
-
         return rootView;
     }
 
@@ -123,13 +118,13 @@ public class FolderDetailFragment extends Fragment implements LoaderManager.Load
         super.onActivityCreated(savedInstanceState);
         Log.d(TAG, "onActivityCreated");
 
-        mAdapter = new MediaEntityAdapter(getActivity(), MEDIA_TYPE);
+        mAdapter = new MediaEntityAdapter(getActivity(), mediaType);
         mAdapter.setSelection(selection);
         mGridView.setAdapter(mAdapter);
         //TODO Listener is too Strict on flinging
         mGridView.setOnScrollListener(new PauseOnScrollListener(ImageLoader.getInstance(), false, true));
 
-        getLoaderManager().initLoader(MEDIA_TYPE, null, this);
+        getLoaderManager().initLoader(mediaType, null, this);
         Log.d(TAG, "selection: " + selection.toString());
     }
 
