@@ -9,3 +9,9 @@ the whole activity.
 The media files are loaded asynchronously using Loaders. To display their
 thumbnails, this library uses [Universal Image Loader](https://github.com/nostra13/Android-Universal-Image-Loader) 
 library.
+
+To create `.apk` of sample module:
+
+1. run `gradlew` or `gradlew.bat` to get gradle wrapper
+2. execute gradle task `sample:assemble`
+3. generated `.apk` can be found in `sample/build/outputs/apk`
